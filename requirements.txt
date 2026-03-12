@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+numpy
+scikit-learn
+geopy
+jinja2
+pydantic

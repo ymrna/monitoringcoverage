@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoring Coverage</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="/coverage/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+</head>
+<body>
+
+<h1 class="title">📡 Monitoring Coverage</h1>
+
+<div class="container">
+
+<div class="card">
+<h3>Input Target</h3>
+
+<textarea id="coords" placeholder="-2.53,106.10"></textarea>
+
+<input type="file" id="excelFile" accept=".xlsx,.xls">
+
+<br>
+<button id="btnHitung">Hitung Titik Ukur</button>
+<button id="btnMyLoc">Posisi Saya</button>
+<button class="secondary" id="btnPanel">Daftar Titik</button>
+<button class="danger" id="btnClear">CLEAR</button>
+
+<div style="margin-top:10px">
+<b>Status:</b> <span id="status">Belum ada perhitungan</span>
+</div>
+</div>
+
+<div class="card map-card">
+<div id="map"></div>
+</div>
+
+</div>
+
+<!-- SIDE PANEL -->
+
+<div id="panel" class="sidepanel">
+<h3>Daftar Titik</h3>
+<table id="pointTable">
+<thead>
+<tr>
+<th>Client</th>
+<th>Freq</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<button class="floating-panel-btn" id="fabPanel">☰</button>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+// ================= GLOBAL =================
+let map;
+let rawPoints=[];
+let standingPoints=[];
+let userMarker=null;
+let targetLayers=[];
+let measureLayers=[];
+let circles=[];
+let distanceLines=[];
+
+
+// ICONS
+const targetIcon=L.icon({
+ iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png',
+ iconSize:[32,32]
+});
+
+const standIcon=L.icon({
+ iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png',
+ iconSize:[32,32]
+});
+
+const userIcon=L.icon({
+ iconUrl:'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',
+ iconSize:[32,32]
+ 
+});
+
+// ================= INIT =================
+window.onload=()=>{
+ map=L.map('map').setView([-2.5,118],5);
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+ setTimeout(()=>map.invalidateSize(),200);
+
+
+ document.getElementById("btnHitung").onclick=optimize;
+ document.getElementById("btnMyLoc").onclick=getUserLocation;
+ document.getElementById("btnClear").onclick=clearAll;
+ document.getElementById("btnPanel").onclick=togglePanel;
+ document.getElementById("fabPanel").onclick=togglePanel;
+ document.getElementById("excelFile").addEventListener("change",loadExcel);
+};
+
+// ================= PANEL =================
+function togglePanel(){
+ document.getElementById("panel").classList.toggle("open");
+}
+
+// ================= CLEAR =================
+function clearMapOnly(){
+ [...targetLayers,...measureLayers,...circles,...distanceLines].forEach(l=>{
+   if(map.hasLayer(l)) map.removeLayer(l);
+ });
+ targetLayers=[];
+ measureLayers=[];
+ circles=[];
+ distanceLines=[];
+}
+
+
+function clearAll(){
+ clearMapOnly();
+
+ rawPoints=[];
+ standingPoints=[];
+
+ document.getElementById("coords").value="";
+ document.getElementById("excelFile").value="";
+ document.getElementById("status").innerText="Belum ada perhitungan";
+ document.querySelector("#pointTable tbody").innerHTML="";
+
+ if(userMarker){
+   map.removeLayer(userMarker);
+   userMarker=null;
+ }
+
+ map.setView([-2.5,118],5);
+}
+
+// ================= USER =================
+function getUserLocation(){
+ navigator.geolocation.getCurrentPosition(pos=>{
+  let lat=pos.coords.latitude;
+  let lon=pos.coords.longitude;
+
+  if(userMarker) map.removeLayer(userMarker);
+
+  userMarker=L.marker([lat,lon],{icon:userIcon})
+  .addTo(map).bindPopup("📍 Posisi Saya").openPopup();
+
+  map.setView([lat,lon],13);
+ });
+}
+
+// ================= EXCEL =================
+function loadExcel(e){
+ const file=e.target.files[0];
+ if(!file) return;
+
+ const reader=new FileReader();
+ reader.onload=ev=>{
+  const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+  const sheet=wb.Sheets[wb.SheetNames[0]];
+  const json=XLSX.utils.sheet_to_json(sheet);
+
+  rawPoints=json.map(r=>({
+   nama:r.nama_client || r.nama || "Client",
+   freq:r.freq || "-",
+   lokasi:r.lokasi || "-",
+   lat:+r.lat,
+   lon:+r.long
+  }));
+
+  document.getElementById("coords").value =
+   rawPoints.map(p=>`${p.lat},${p.lon}`).join("\n");
+
+  plotTargets();
+ };
+ reader.readAsArrayBuffer(file);
+}
+
+// ================= TARGET PLOT =================
+function plotTargets(){
+ targetLayers.forEach(l=>map.removeLayer(l));
+ targetLayers=[];
+
+ rawPoints.forEach(p=>{
+  let m=L.marker([p.lat,p.lon],{icon:targetIcon})
+  .addTo(map)
+  .bindPopup(`<b>${p.nama}</b><br>Freq: ${p.freq}<br>${p.lokasi}`);
+
+  targetLayers.push(m);
+ });
+}
+
+// ================= OPTIMIZE =================
+async function optimize(){
+
+ clearMapOnly();
+
+ if(rawPoints.length===0){
+  rawPoints=document.getElementById("coords").value.trim().split("\n").map(l=>{
+   let p=l.split(',');
+   return {nama:'Manual',freq:'-',lokasi:'-',lat:+p[0],lon:+p[1]};
+  });
+ }
+
+ let points=rawPoints.map(p=>[p.lat,p.lon]);
+ plotTargets();
+
+ let res=await fetch('/optimize',{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({locations:points})
+ });
+
+ let data=await res.json();
+ standingPoints=data.recommended_points;
+
+ document.getElementById('status').innerText=
+  "Dibutuhkan "+standingPoints.length+" titik ukur";
+
+ standingPoints.forEach((c,i)=>{
+
+  let circle=L.circle(c,{radius:10000,color:'#00ffaa',fillOpacity:0.08}).addTo(map);
+  circles.push(circle);
+
+  let marker=L.marker(c,{icon:standIcon})
+  .addTo(map)
+  .bindPopup(`<b>📡 Titik Ukur ${i+1}</b><br>
+  <a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${c[0]},${c[1]}">Navigasi</a>`);
+
+  measureLayers.push(marker);
+
+   // === DISTANCE LINES ===
+ rawPoints.forEach(p=>{
+   let dist=haversine([p.lat,p.lon],c);
+
+   if(dist<=10){ // hanya yg ke-cover
+     let line=L.polyline([[p.lat,p.lon],c],{
+       color:'#ffaa00',
+       weight:2,
+       dashArray:'6,6'
+     }).addTo(map);
+
+     let midLat=(p.lat+c[0])/2;
+     let midLon=(p.lon+c[1])/2;
+
+     line.bindTooltip(dist.toFixed(2)+" km",{
+        permanent:true,
+        direction:'center',
+        className:'distance-label'
+     });
+
+     distanceLines.push(line);
+   }
+ });
+
+ });
+
+ updateTable();
+ map.fitBounds(points);
+}
+
+// ================= TABLE =================
+function updateTable(){
+ const tb=document.querySelector('#pointTable tbody');
+ tb.innerHTML='';
+ rawPoints.forEach(p=>{
+  tb.innerHTML+=`<tr>
+  <td>${p.nama}</td>
+  <td>${p.freq}</td>
+  <td>${p.lokasi}</td>
+  </tr>`;
+ });
+}
+
+function haversine(a,b){
+ let R=6371;
+ let dLat=(b[0]-a[0])*Math.PI/180;
+ let dLon=(b[1]-a[1])*Math.PI/180;
+ let lat1=a[0]*Math.PI/180;
+ let lat2=b[0]*Math.PI/180;
+
+ let x=Math.sin(dLat/2)**2+
+       Math.sin(dLon/2)**2*Math.cos(lat1)*Math.cos(lat2);
+
+ return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+</script>
+
+</body>
+</html>
