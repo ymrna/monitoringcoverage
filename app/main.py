@@ -11,6 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="SFR Coverage Optimizer")
 
+
+
+app.mount("/coverage/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(
+    directory=os.path.join(BASE_DIR, "templates")
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # bisa dibatasi nanti
@@ -18,9 +25,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.mount("/coverage/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
