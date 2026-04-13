@@ -5,3 +5,4 @@ scikit-learn
 geopy
 jinja2
 pydantic
+python-multipart
