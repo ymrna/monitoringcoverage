@@ -37,7 +37,10 @@ app.add_middleware(
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html"
+    )
 
 @app.post("/optimize")
 def optimize(data: Points):
