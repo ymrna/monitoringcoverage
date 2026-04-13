@@ -117,7 +117,7 @@ async function optimize(){
     });
 
     // request optimizer
-    let res = await fetch("/optimize",{
+    let res = await fetch(window.location.origin + "/optimize",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({locations:points})
