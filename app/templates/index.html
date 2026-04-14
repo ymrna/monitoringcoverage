@@ -12,7 +12,17 @@
 </head>
 <body>
 
-<h1 class="title">📡 Monitoring Coverage</h1>
+<div class="title-bar">
+
+    <h1 class="title">📡 Monitoring Coverage</h1>
+
+    <a href="/static/TemplateMonitoringTitikUkur.xlsx"
+       download
+       class="download-btn">
+       ⬇ Download Template
+    </a>
+
+</div>
 
 <div class="container">
 
@@ -40,9 +50,10 @@
 
 </div>
 
+<div id="overlay"></div>
 <!-- SIDE PANEL -->
 
-<div id="panel" class="sidepanel">
+<div id="sidepanel" class="sidepanel">
 <h3>Daftar Titik</h3>
 <table id="pointTable">
 <thead>
@@ -106,7 +117,7 @@ window.onload=()=>{
 
 // ================= PANEL =================
 function togglePanel(){
- document.getElementById("panel").classList.toggle("open");
+ document.getElementById("sidepanel").classList.toggle("open");
 }
 
 // ================= CLEAR =================
@@ -292,6 +303,6 @@ function haversine(a,b){
 }
 
 </script>
-<script src="/static/map.js"></script>
+
 </body>
 </html>
