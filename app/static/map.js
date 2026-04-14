@@ -17,8 +17,11 @@ window.onload = () => {
     }).addTo(map);
 
     setupEvents();
+
+    document.getElementById("overlay").onclick=togglePanel;
 };
 
+setTimeout(()=>map.invalidateSize(),200);
 // ================= EVENTS =================
 function setupEvents(){
 
@@ -193,11 +196,14 @@ function buildPointList(targets,stands){
 
 // ================= PANEL =================
 function togglePanel(){
-    panelOpen=!panelOpen;
-    document.getElementById("sidePanel")
-        .classList.toggle("open",panelOpen);
-}
 
+ let panel=document.getElementById("sidepanel");
+ let overlay=document.getElementById("overlay");
+
+ panel.classList.toggle("open");
+ overlay.classList.toggle("show");
+
+}
 // ================= DISTANCE =================
 function distance(a,b){
     let R=6371;
