@@ -25,7 +25,6 @@
 </div>
 
 <div class="container">
-
 <div class="card">
 <h3>Input Target</h3>
 
@@ -37,7 +36,16 @@
 <button id="btnHitung">Hitung Titik Ukur</button>
 <button id="btnMyLoc">Posisi Saya</button>
 <button class="secondary" id="btnPanel">Daftar Titik</button>
+
+<button id="btnSave">💾 Save</button>
+<button id="btnHistory">📂 History</button>
+<button id="btnExport">📊 Export Excel</button>
+
 <button class="danger" id="btnClear">CLEAR</button>
+
+<button onclick="clearHistory()">
+🧹 Clear History
+</button>
 
 <div style="margin-top:10px">
 <b>Status:</b> <span id="status">Belum ada perhitungan</span>
@@ -47,6 +55,7 @@
 <div class="card map-card">
 <div id="map"></div>
 </div>
+
 
 </div>
 
@@ -65,13 +74,24 @@
 </thead>
 <tbody></tbody>
 </table>
+
+<hr>
+
+<h3>History</h3>
+
+<div id="historyList"></div>
+
 </div>
+
+
 
 <button class="floating-panel-btn" id="fabPanel">☰</button>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+
+
 // ================= GLOBAL =================
 let map;
 let rawPoints=[];
@@ -113,12 +133,16 @@ window.onload=()=>{
  document.getElementById("btnPanel").onclick=togglePanel;
  document.getElementById("fabPanel").onclick=togglePanel;
  document.getElementById("excelFile").addEventListener("change",loadExcel);
+ document.getElementById("btnSave").onclick = saveSession;
+ document.getElementById("btnHistory").onclick = showHistory;
+ document.getElementById("btnExport").onclick = exportExcel;
 };
 
 // ================= PANEL =================
 function togglePanel(){
  document.getElementById("sidepanel").classList.toggle("open");
 }
+
 
 // ================= CLEAR =================
 function clearMapOnly(){
@@ -151,6 +175,120 @@ function clearAll(){
  map.setView([-2.5,118],5);
 }
 
+// ================= SHOW HISTORY =================
+function showHistory(){
+
+ let history =
+  JSON.parse(localStorage.getItem("coverage_history") || "[]");
+
+ let div = document.getElementById("historyList");
+
+ div.innerHTML = "";
+
+ if(history.length === 0){
+   div.innerHTML = "<p>Tidak ada history</p>";
+   return;
+ }
+
+ history.reverse().forEach(item=>{
+
+   let el = document.createElement("div");
+
+   el.style.borderBottom="1px solid #333";
+   el.style.padding="8px";
+
+   el.innerHTML = `
+     <b>${item.tanggal}</b><br>
+     ${item.standingPoints.length} titik ukur
+     <br>
+     <button onclick="loadHistory(${item.id})">
+        Load
+     </button>
+     <button onclick="deleteHistory(${item.id})">
+        Hapus
+     </button>
+   `;
+
+   div.appendChild(el);
+
+ });
+
+ togglePanel();
+}
+
+// ================= LOAD HISTORY =================
+
+function loadHistory(id){
+
+ let history =
+  JSON.parse(localStorage.getItem("coverage_history") || "[]");
+
+ let item = history.find(h=>h.id===id);
+
+ if(!item) return;
+
+ clearAll();
+
+ rawPoints = item.rawPoints;
+ standingPoints = item.standingPoints;
+
+ plotTargets();
+
+ standingPoints.forEach((c,i)=>{
+
+   let circle=L.circle(c,{
+     radius:10000,
+     color:'#00ffaa',
+     fillOpacity:0.08
+   }).addTo(map);
+
+   circles.push(circle);
+
+   let marker=L.marker(c,{icon:standIcon})
+   .addTo(map)
+   .bindPopup("📡 Titik Ukur "+(i+1));
+
+   measureLayers.push(marker);
+
+ });
+
+ updateTable();
+
+ map.fitBounds(
+   rawPoints.map(p=>[p.lat,p.lon])
+ );
+
+ togglePanel();
+}
+
+
+// ================= DELETE HISTORY =================
+function deleteHistory(id){
+
+ let history =
+  JSON.parse(localStorage.getItem("coverage_history") || "[]");
+
+ history = history.filter(h=>h.id!==id);
+
+ localStorage.setItem(
+   "coverage_history",
+   JSON.stringify(history)
+ );
+
+ showHistory();
+}
+
+// ================= CLEAR HISTORY =================
+function clearHistory(){
+
+ if(confirm("Hapus semua history?")){
+
+   localStorage.removeItem("coverage_history");
+
+   showHistory();
+ }
+
+}
 // ================= USER =================
 function getUserLocation(){
  navigator.geolocation.getCurrentPosition(pos=>{
