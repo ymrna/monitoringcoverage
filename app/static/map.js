@@ -258,3 +258,31 @@ function clearAll(){
 
     map.setView([-2.5,118],5);
 }
+
+// ================= SAVE SESSION =================
+function saveSession(){
+
+ if(standingPoints.length === 0){
+   alert("Belum ada hasil untuk disimpan");
+   return;
+ }
+
+ let history =
+  JSON.parse(localStorage.getItem("coverage_history") || "[]");
+
+ let data = {
+   id: Date.now(),
+   tanggal: new Date().toLocaleString(),
+   rawPoints,
+   standingPoints
+ };
+
+ history.push(data);
+
+ localStorage.setItem(
+   "coverage_history",
+   JSON.stringify(history)
+ );
+
+ alert("✅ Data berhasil disimpan!");
+}
