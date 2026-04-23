@@ -303,6 +303,44 @@ function getUserLocation(){
  });
 }
 
+// ================= EXPORT EXCEL =================
+function exportExcel(){
+
+ if(standingPoints.length === 0){
+   alert("Belum ada data");
+   return;
+ }
+
+ let data = [];
+
+ standingPoints.forEach((p,i)=>{
+
+   data.push({
+     No:i+1,
+     Latitude:p[0],
+     Longitude:p[1]
+   });
+
+ });
+
+ let ws =
+  XLSX.utils.json_to_sheet(data);
+
+ let wb =
+  XLSX.utils.book_new();
+
+ XLSX.utils.book_append_sheet(
+   wb,
+   ws,
+   "Titik_Ukur"
+ );
+
+ XLSX.writeFile(
+   wb,
+   "hasil_titik_ukur.xlsx"
+ );
+
+}
 // ================= EXCEL =================
 function loadExcel(e){
  const file=e.target.files[0];
