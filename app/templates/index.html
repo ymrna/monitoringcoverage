@@ -1,62 +1,121 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monitoring Coverage</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<link rel="stylesheet" href="/coverage/static/style.css">
+<link rel="stylesheet" href="/static/style.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="/static/app.js"></script>
 
 </head>
 <body>
 
-<h1 class="title">📡 Monitoring Coverage</h1>
+<!-- HEADER -->
+<div class="title-bar">
 
+    <h1 class="title">📡 Monitoring Coverage</h1>
+
+    <a href="/static/TemplateMonitoringTitikUkur.xlsx"
+       download
+       class="download-btn">
+       ⬇ Download Template
+    </a>
+
+   <p id="btnExport" class="export-btn">
+    📊 Export Excel
+   </p>
+
+</div>
+
+<!-- MAIN -->
 <div class="container">
 
-<div class="card">
-<h3>Input Target</h3>
+    <div class="card">
+        <h3>Input Target</h3>
 
-<textarea id="coords" placeholder="-2.53,106.10"></textarea>
+        <textarea id="coords" placeholder="-2.53,106.10"></textarea>
 
-<input type="file" id="excelFile" accept=".xlsx,.xls">
+        <input type="file" id="excelFile" accept=".xlsx,.xls">
 
-<br>
-<button id="btnHitung">Hitung Titik Ukur</button>
-<button id="btnMyLoc">Posisi Saya</button>
-<button class="secondary" id="btnPanel">Daftar Titik</button>
-<button class="danger" id="btnClear">CLEAR</button>
+        <!-- ACTIONS -->
+        <div class="action-group">
+            <button class="btn danger" id="btnClear">CLEAR</button>
+        </div>
 
-<div style="margin-top:10px">
-<b>Status:</b> <span id="status">Belum ada perhitungan</span>
+        <div class="action-group">
+            <button class="btn" id="btnHitung">Hitung Titik Ukur</button>
+            <button class="btn secondary" id="btnPanel">Daftar Titik</button>
+            <button class="btn" id="btnSave">💾 Save</button>
+            <button class="btn" id="btnHistory">📂 History</button>
+        </div>
+
+        <div class="status">
+            <b>Status:</b> <span id="status">Belum ada perhitungan</span>
+        </div>
+    </div>
+
+    <div class="card map-card">
+        <div id="map"></div>
+    </div>
+
 </div>
-</div>
 
-<div class="card map-card">
-<div id="map"></div>
-</div>
-
-</div>
+<div id="overlay"></div>
 
 <!-- SIDE PANEL -->
+<div id="sidepanel" class="sidepanel">
 
-<div id="panel" class="sidepanel">
-<h3>Daftar Titik</h3>
-<table id="pointTable">
-<thead>
-<tr>
-<th>Client</th>
-<th>Freq</th>
-<th>Lokasi</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+    <!-- DROPDOWN DAFTAR TITIK -->
+
+    <h3
+     id="togglePointList"
+     onclick="togglePointDropdown()"
+     style="cursor:pointer;">
+
+     ▶ Daftar Titik
+
+    </h3>
+
+    <div
+     id="pointListWrapper"
+     class="dropdown-content">
+
+        <table id="pointTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>Client</th>
+                    <th>Freq</th>
+                    <th>Lokasi</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody></tbody>
+
+        </table>
+
+    </div>
+
+    <hr>
+
+    <!-- HISTORY -->
+
+    <h3>History</h3>
+
+    <div id="historyList"></div>
+
 </div>
+
 
 <button class="floating-panel-btn" id="fabPanel">☰</button>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="/static/app.js"></script>
+
+</body>
+</html>
