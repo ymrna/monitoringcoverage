@@ -35,17 +35,20 @@ window.onload=()=>{
 
 
  document.getElementById("btnHitung").onclick=optimize;
- document.getElementById("btnMyLoc").onclick=getUserLocation;
  document.getElementById("btnClear").onclick=clearAll;
  document.getElementById("btnPanel").onclick=togglePanel;
  document.getElementById("fabPanel").onclick=togglePanel;
  document.getElementById("excelFile").addEventListener("change",loadExcel);
+ document.getElementById("btnSave").onclick = saveSession;
+ document.getElementById("btnHistory").onclick = showHistory;
+ document.getElementById("btnExport").onclick = exportExcel;
 };
 
 // ================= PANEL =================
 function togglePanel(){
- document.getElementById("panel").classList.toggle("open");
+ document.getElementById("sidepanel").classList.toggle("open");
 }
+
 
 // ================= CLEAR =================
 function clearMapOnly(){
@@ -78,6 +81,130 @@ function clearAll(){
  map.setView([-2.5,118],5);
 }
 
+
+// ================= SHOW HISTORY =================
+
+function showHistory(){
+
+ togglePanel();
+
+ let history =
+ JSON.parse(
+  localStorage.getItem(
+   "coverage_history"
+  ) || "[]"
+ );
+
+ let div =
+ document.getElementById(
+  "historyList"
+ );
+
+ div.innerHTML="";
+
+ history.forEach(h=>{
+
+  let d =
+  document.createElement("div");
+
+  d.style.marginBottom="10px";
+
+  d.innerHTML =
+
+  "<b>"+h.nama+"</b><br>"+
+
+  h.tanggal+
+
+  " ("+
+  h.standingPoints.length+
+  " titik) <br>"+
+
+  "<button onclick='loadHistory("+h.id+")'>Load</button> "+
+
+  "<button onclick='deleteHistory("+h.id+")'>Hapus</button>";
+
+  div.appendChild(d);
+
+ });
+
+}
+
+
+
+// ================= LOAD HISTORY =================
+
+function loadHistory(id){
+
+ let history =
+  JSON.parse(localStorage.getItem("coverage_history") || "[]");
+
+ let item = history.find(h=>h.id===id);
+
+ if(!item) return;
+
+ clearAll();
+
+ rawPoints = item.rawPoints;
+ standingPoints = item.standingPoints;
+
+ plotTargets();
+
+ standingPoints.forEach((c,i)=>{
+
+   let circle=L.circle(c,{
+     radius:10000,
+     color:'#00ffaa',
+     fillOpacity:0.08
+   }).addTo(map);
+
+   circles.push(circle);
+
+   let marker=L.marker(c,{icon:standIcon})
+   .addTo(map)
+   .bindPopup("📡 Titik Ukur "+(i+1));
+
+   measureLayers.push(marker);
+
+ });
+
+ updateTable();
+
+ map.fitBounds(
+   rawPoints.map(p=>[p.lat,p.lon])
+ );
+
+ togglePanel();
+
+ // Tutup dropdown setelah load
+let wrapper =
+ document.getElementById("pointListWrapper");
+
+let header =
+ document.getElementById("togglePointList");
+
+wrapper.classList.remove("open");
+header.innerHTML = "▶ Daftar Titik";
+}
+
+
+
+// ================= DELETE HISTORY =================
+function deleteHistory(id){
+
+ let history =
+  JSON.parse(localStorage.getItem("coverage_history") || "[]");
+
+ history = history.filter(h=>h.id!==id);
+
+ localStorage.setItem(
+   "coverage_history",
+   JSON.stringify(history)
+ );
+
+ showHistory();
+}
+
+
 // ================= USER =================
 function getUserLocation(){
  navigator.geolocation.getCurrentPosition(pos=>{
@@ -93,6 +220,44 @@ function getUserLocation(){
  });
 }
 
+// ================= EXPORT EXCEL =================
+function exportExcel(){
+
+ if(standingPoints.length === 0){
+   alert("Belum ada data");
+   return;
+ }
+
+ let data = [];
+
+ standingPoints.forEach((p,i)=>{
+
+   data.push({
+     No:i+1,
+     Latitude:p[0],
+     Longitude:p[1]
+   });
+
+ });
+
+ let ws =
+  XLSX.utils.json_to_sheet(data);
+
+ let wb =
+  XLSX.utils.book_new();
+
+ XLSX.utils.book_append_sheet(
+   wb,
+   ws,
+   "Titik_Ukur"
+ );
+
+ XLSX.writeFile(
+   wb,
+   "target_titik_ukur.xlsx"
+ );
+
+}
 // ================= EXCEL =================
 function loadExcel(e){
  const file=e.target.files[0];
@@ -229,4 +394,93 @@ function haversine(a,b){
  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
+// ================= SAVE SESSION WITH PROJECT NAME =================
 
+
+function saveSession(){
+
+ if(standingPoints.length===0){
+  alert("Belum ada hasil untuk disimpan");
+  return;
+ }
+
+  // === CONFIRM DULU ===
+ if(!confirm("Simpan project ini?")){
+  return;
+ }
+
+ // MINTA NAMA PROJECT
+ let projectName = prompt("Masukkan Nama Project:");
+
+ // === Jika Cancel → BATAL SIMPAN ===
+ if(projectName === null){
+  alert("❌ Penyimpanan dibatalkan");
+  return;
+ }
+
+ // === Jika kosong → beri default ===
+ if(projectName.trim() === ""){
+  projectName = "Project Tanpa Nama";
+ }
+
+ let history =
+ JSON.parse(
+  localStorage.getItem(
+   "coverage_history"
+  ) || "[]"
+ );
+
+ let data={
+
+  id:Date.now(),
+
+  nama:projectName,
+
+  tanggal:
+  new Date().toLocaleString(),
+
+  rawPoints,
+  standingPoints
+
+ };
+
+ history.push(data);
+
+ localStorage.setItem(
+  "coverage_history",
+  JSON.stringify(history)
+ );
+
+ alert("✅ Project disimpan");
+
+}
+
+// ================= TOGGLE POINT LIST =================
+
+function togglePointDropdown(){
+
+ let content =
+ document.getElementById(
+  "pointListWrapper"
+ );
+
+ let header =
+ document.getElementById(
+  "togglePointList"
+ );
+
+ content.classList.toggle("open");
+
+ if(content.classList.contains("open")){
+
+  header.innerHTML =
+  "▼ Daftar Titik";
+
+ }else{
+
+  header.innerHTML =
+  "▶ Daftar Titik";
+
+ }
+
+}
