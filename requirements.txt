@@ -9,4 +9,5 @@ pydantic
 python-multipart
 gunicorn
 psycopg2-binary
+psycopg
 sqlalchemy
