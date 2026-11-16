@@ -84,49 +84,37 @@ function clearAll(){
 
 // ================= SHOW HISTORY =================
 
-function showHistory(){
-
+async function showHistory(){
  togglePanel();
+ let div = document.getElementById("historyList");
+ div.innerHTML = "Loading...";
 
- let history =
- JSON.parse(
-  localStorage.getItem(
-   "coverage_history"
-  ) || "[]"
- );
+ try {
+  let res = await fetch('/api/history');
+  let history = await res.json();
 
- let div =
- document.getElementById(
-  "historyList"
- );
+  div.innerHTML = "";
+  if(history.length === 0){
+    div.innerHTML = "<p>Belum ada history</p>";
+    return;
+  }
 
- div.innerHTML="";
+  window.currentHistory = history;
 
- history.forEach(h=>{
-
-  let d =
-  document.createElement("div");
-
-  d.style.marginBottom="10px";
-
-  d.innerHTML =
-
-  "<b>"+h.nama+"</b><br>"+
-
-  h.tanggal+
-
-  " ("+
-  h.standingPoints.length+
-  " titik) <br>"+
-
-  "<button onclick='loadHistory("+h.id+")'>Load</button> "+
-
-  "<button onclick='deleteHistory("+h.id+")'>Hapus</button>";
-
-  div.appendChild(d);
-
- });
-
+  history.forEach(h => {
+   let d = document.createElement("div");
+   d.style.marginBottom = "10px";
+   d.innerHTML =
+   "<b>" + h.nama + "</b><br>" +
+   h.tanggal +
+   " (" + h.standingPoints.length + " titik) <br>" +
+   "<button onclick='loadHistory(" + h.id + ")'>Load</button> " +
+   "<button onclick='deleteHistory(" + h.id + ")'>Hapus</button>";
+   div.appendChild(d);
+  });
+ } catch(e) {
+  div.innerHTML = "Gagal memuat history";
+ }
 }
 
 
@@ -134,12 +122,7 @@ function showHistory(){
 // ================= LOAD HISTORY =================
 
 function loadHistory(id){
-
- let history =
-  JSON.parse(localStorage.getItem("coverage_history") || "[]");
-
- let item = history.find(h=>h.id===id);
-
+ let item = (window.currentHistory || []).find(h => h.id === id);
  if(!item) return;
 
  clearAll();
@@ -149,59 +132,90 @@ function loadHistory(id){
 
  plotTargets();
 
- standingPoints.forEach((c,i)=>{
-
-   let circle=L.circle(c,{
-     radius:10000,
-     color:'#00ffaa',
-     fillOpacity:0.08
+ standingPoints.forEach((c, i) => {
+   let circle = L.circle(c, {
+     radius: 10000,
+     color: '#00ffaa',
+     fillOpacity: 0.08
    }).addTo(map);
 
    circles.push(circle);
 
-   let marker=L.marker(c,{icon:standIcon})
+   let marker = L.marker(c, {icon: standIcon})
    .addTo(map)
-   .bindPopup("📡 Titik Ukur "+(i+1));
+   .bindPopup("📡 Titik Ukur " + (i + 1));
 
    measureLayers.push(marker);
-
  });
 
  updateTable();
 
  map.fitBounds(
-   rawPoints.map(p=>[p.lat,p.lon])
+   rawPoints.map(p => [p.lat, p.lon])
  );
 
  togglePanel();
 
- // Tutup dropdown setelah load
-let wrapper =
- document.getElementById("pointListWrapper");
-
-let header =
- document.getElementById("togglePointList");
-
-wrapper.classList.remove("open");
-header.innerHTML = "▶ Daftar Titik";
+ let wrapper = document.getElementById("pointListWrapper");
+ let header = document.getElementById("togglePointList");
+ wrapper.classList.remove("open");
+ header.innerHTML = "▶ Daftar Titik";
 }
 
 
 
 // ================= DELETE HISTORY =================
-function deleteHistory(id){
+async function deleteHistory(id){
+ if(!confirm("Hapus project ini?")) return;
 
- let history =
-  JSON.parse(localStorage.getItem("coverage_history") || "[]");
+ let res = await fetch('/api/history/' + id, { method: 'DELETE' });
+ if(res.ok){
+   showHistory();
+ } else {
+   alert("Gagal menghapus history");
+ }
+}
 
- history = history.filter(h=>h.id!==id);
+// ================= SAVE SESSION WITH PROJECT NAME =================
+async function saveSession(){
+ if(standingPoints.length === 0){
+  alert("Belum ada hasil untuk disimpan");
+  return;
+ }
 
- localStorage.setItem(
-   "coverage_history",
-   JSON.stringify(history)
- );
+ if(!confirm("Simpan project ini?")){
+  return;
+ }
 
- showHistory();
+ let projectName = prompt("Masukkan Nama Project:");
+
+ if(projectName === null){
+  alert("❌ Penyimpanan dibatalkan");
+  return;
+ }
+
+ if(projectName.trim() === ""){
+  projectName = "Project Tanpa Nama";
+ }
+
+ let data = {
+  nama: projectName,
+  tanggal: new Date().toLocaleString(),
+  rawPoints,
+  standingPoints
+ };
+
+ let res = await fetch('/api/history', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data)
+ });
+
+ if(res.ok){
+  alert("✅ Project berhasil disimpan ke database");
+ } else {
+  alert("❌ Gagal menyimpan project");
+ }
 }
 
 

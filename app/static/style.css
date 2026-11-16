@@ -211,11 +211,7 @@ th,td{
 }
 
 .dropdown-content.open{
- max-height:500px; /* bisa disesuaikan */
+ max-height:300px; /* bisa disesuaikan */
  overflow:auto;
 }
 
-.dropdown-content.open{
- max-height:300px;
- overflow-y:auto;
-}
