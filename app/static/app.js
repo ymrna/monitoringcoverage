@@ -177,6 +177,7 @@ async function deleteHistory(id){
 }
 
 // ================= SAVE SESSION WITH PROJECT NAME =================
+// ================= SAVE SESSION WITH PROJECT NAME =================
 async function saveSession(){
  if(standingPoints.length === 0){
   alert("Belum ada hasil untuk disimpan");
@@ -217,7 +218,6 @@ async function saveSession(){
   alert("❌ Gagal menyimpan project");
  }
 }
-
 
 // ================= USER =================
 function getUserLocation(){
