@@ -95,13 +95,23 @@ async function showHistory() {
 
     history.forEach(h => {
       let d = document.createElement("div");
-      d.style.marginBottom = "10px";
-      d.innerHTML =
-        "<b>" + h.nama + "</b><br>" +
-        h.tanggal +
-        " (" + h.standingPoints.length + " titik) <br>" +
-        "<button onclick='loadHistory(" + h.id + ")'>Load</button> " +
-        "<button onclick='deleteHistory(" + h.id + ")'>Hapus</button>";
+      d.className = "history-item";
+      d.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);";
+
+      d.innerHTML = `
+        <div style="flex: 1; padding-right: 8px;">
+          <div style="font-weight: bold; color: #fff;">${h.nama}</div>
+          <div style="font-size: 0.8em; color: #aaa;">${h.tanggal} (${h.standingPoints.length} titik)</div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button onclick="loadHistory(${h.id})" title="Load Project" style="padding: 6px 10px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 14px;">
+            📂
+          </button>
+          <button onclick="deleteHistory(${h.id})" title="Hapus Project" style="padding: 6px 10px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 14px;">
+            🗑️
+          </button>
+        </div>
+      `;
       div.appendChild(d);
     });
   } catch (e) {
