@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request, HTTPException, Depends, Form, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import os
@@ -12,12 +13,19 @@ from app.optimizer import cluster_points
 
 app = FastAPI(title="SFR Coverage Optimizer")
 
+# ✅ Kunci Rahasia Session (bisa diatur dari Environment Render)
+SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-change-this")
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
+# ✅ Username & Password Default (dapat diubah via Environment Variable Render)
+ADMIN_USERNAME = os.getenv("APP_USER", "admin")
+ADMIN_PASSWORD = os.getenv("APP_PASS", "admin123")
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Database Setup
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./local.db")
 
-# ✅ Force driver postgresql+psycopg2 agar tidak error ModulenotFoundError 'psycopg'
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
 elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+psycopg2://"):
@@ -26,7 +34,6 @@ elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("p
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Auto-create table di PostgreSQL / SQLite saat app start
 Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -35,6 +42,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Middleware Pengecekan Login
+def verify_login(request: Request):
+    user = request.session.get("user")
+    if not user:
+        raise HTTPException(status_code=status.HTTP_307_TEMPORARY_REDIRECT, headers={"Location": "/login"})
+    return user
 
 # Static & Templates Setup
 app.mount(
@@ -47,7 +61,6 @@ templates = Jinja2Templates(
     directory=os.path.join(BASE_DIR, "templates")
 )
 
-# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -56,22 +69,54 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ================= AUTH ENDPOINTS =================
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    if request.session.get("user"):
+        return RedirectResponse(url="/", status_code=303)
+    return templates.TemplateResponse(request=request, name="login.html")
+
+@app.post("/login")
+def login_action(request: Request, username: str = Form(...), password: str = Form(...)):
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        request.session["user"] = username
+        return RedirectResponse(url="/", status_code=303)
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"error": "Username atau Password salah!"}
+    )
+
+@app.get("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/login", status_code=303)
+
+# ================= PROTECTED APP ENDPOINTS =================
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
+    if not request.session.get("user"):
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse(
         request=request,
         name="index.html"
     )
 
 @app.post("/optimize")
-def optimize(data: Points):
+def optimize(data: Points, request: Request):
+    if not request.session.get("user"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
     centers = cluster_points(data.locations)
     return {"recommended_points": centers}
 
-# ================= DATABASE ENDPOINTS =================
+# ================= PROTECTED DATABASE ENDPOINTS =================
 
 @app.get("/api/history")
-def get_history(db: Session = Depends(get_db)):
+def get_history(request: Request, db: Session = Depends(get_db)):
+    if not request.session.get("user"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
     records = db.query(CoverageHistory).order_by(CoverageHistory.id.desc()).all()
     return [
         {
@@ -84,7 +129,9 @@ def get_history(db: Session = Depends(get_db)):
     ]
 
 @app.post("/api/history")
-def create_history(item: HistoryCreate, db: Session = Depends(get_db)):
+def create_history(item: HistoryCreate, request: Request, db: Session = Depends(get_db)):
+    if not request.session.get("user"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
     record = CoverageHistory(
         nama=item.nama,
         tanggal=item.tanggal,
@@ -97,7 +144,9 @@ def create_history(item: HistoryCreate, db: Session = Depends(get_db)):
     return {"status": "success", "id": record.id}
 
 @app.delete("/api/history/{history_id}")
-def delete_history(history_id: int, db: Session = Depends(get_db)):
+def delete_history(history_id: int, request: Request, db: Session = Depends(get_db)):
+    if not request.session.get("user"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
     record = db.query(CoverageHistory).filter(CoverageHistory.id == history_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Item not found")
