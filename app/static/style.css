@@ -215,3 +215,96 @@ th,td{
  overflow:auto;
 }
 
+/* ================= LOGIN PAGE ================= */
+.login-body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Lapisan hitam transparan (overlay) + Gambar background */
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+            url('/static/bg-login.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.login-card {
+    background-color: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(10px); /* Efek blur transparan modern */
+    padding: 35px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    width: 320px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.login-card h2 {
+    margin-top: 0;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.6em;
+    letter-spacing: 0.5px;
+}
+
+.login-card .form-group {
+    margin-bottom: 18px;
+}
+
+.login-card .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9em;
+    color: #ddd;
+}
+
+.login-card .form-group input {
+    width: 100%;
+    padding: 11px 12px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    font-size: 0.95em;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.login-card .form-group input:focus {
+    border-color: #007bff;
+}
+
+.login-card .btn-login {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    margin-top: 10px;
+}
+
+.login-card .btn-login:hover {
+    background-color: #0056b3;
+}
+
+.login-card .btn-login:active {
+    transform: scale(0.98);
+}
+
+.login-card .error-msg {
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid #dc3545;
+    color: #ff8585;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    margin-bottom: 18px;
+    text-align: center;
+}
