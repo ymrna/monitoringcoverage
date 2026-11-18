@@ -10,10 +10,12 @@
 
 <div class="login-card">
     <h2>📡 Login</h2>
-    <h3>Monitoring Coverage (Balmon Pangkalpinang)</h3>
+    <h3 class="login-subtitle">Monitoring Coverage<br>(Balmon Pangkalpinang)</h3>
+    
     {% if error %}
         <div class="error-msg">{{ error }}</div>
     {% endif %}
+    
     <form action="/login" method="post">
         <div class="form-group">
             <label for="username">Username</label>
