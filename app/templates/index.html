@@ -26,9 +26,9 @@
     📊 Export Excel
    </p>
 
-   <!-- ✅ Tombol Logout -->
-  <a href="/logout" class="download-btn" title="Logout"; margin-left: 10px; text-decoration: none; color: white;">
-  ⏻
+   <!-- ✅ Tombol Logout (Icon Only) -->
+  <a href="/logout" title="Logout" class="logout-btn">
+    ⏻
   </a>
 </div>
 
@@ -36,10 +36,14 @@
 <div class="container">
 
     <div class="card">
-       <!-- FILE INPUT + CLEAR BUTTON -->
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+        <h3>Input Target</h3>
+
+        <textarea id="coords" placeholder="-2.53,106.10"></textarea>
+
+        <!-- FILE INPUT + CLEAR BUTTON -->
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px; margin-bottom: 10px;">
             <input type="file" id="excelFile" accept=".xlsx,.xls">
-            <button class="btn danger" id="btnClear">CLEAR</button>
+            <button class="btn danger" id="btnClear" style="margin-top: 0;">CLEAR</button>
         </div>
 
         <div class="action-group">

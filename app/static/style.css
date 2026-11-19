@@ -14,21 +14,13 @@ body{
     margin:auto;
     display:flex;
     align-items:center;
-    justify-content:flex-start;
     padding:14px 12px;
+    gap:10px;
 }
 
 .title{
     font-size:26px;
     margin:0;
-}
-.title-bar{
-    max-width:1100px;
-    margin:auto;
-    display:flex;
-    align-items:center;
-    padding:14px 12px;
-    gap:10px;
 }
 
 /* DOWNLOAD BUTTON */
@@ -41,7 +33,6 @@ body{
     text-decoration:none;
     font-weight:bold;
     margin-left: auto;
-
 }
 
 .download-btn:hover{
@@ -61,6 +52,24 @@ body{
 
 .export-btn:hover{
     background:#1f6feb;
+}
+
+/* LOGOUT BUTTON */
+.logout-btn {
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.logout-btn:hover {
+    background-color: #bd2130;
 }
 
 /* ================= MAIN ================= */
@@ -89,10 +98,11 @@ textarea{
     border-radius:8px;
     padding:8px;
     margin-top:6px;
+    box-sizing: border-box;
 }
 
 input[type=file]{
-    margin-top:10px;
+    margin-top:0;
 }
 
 /* ================= BUTTON ================= */
@@ -202,8 +212,6 @@ th,td{
 
 /* ===== DROPDOWN LIST ===== */
 
-/* DROPDOWN LIST */
-
 .dropdown-content{
  max-height:0;
  overflow:hidden;
@@ -211,7 +219,6 @@ th,td{
 }
 
 .dropdown-content.open{
- max-height:300px; /* bisa disesuaikan */
+ max-height:300px;
  overflow:auto;
 }
-
