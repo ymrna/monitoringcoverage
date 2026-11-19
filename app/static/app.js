@@ -233,7 +233,7 @@ function getUserLocation() {
   });
 }
 
-// ================= EXPORT EXCEL =================
+
 // ================= EXPORT EXCEL =================
 function exportExcel(){
 
