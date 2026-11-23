@@ -21,21 +21,24 @@
             background-color: rgba(30, 30, 30, 0.85);
             backdrop-filter: blur(10px);
             padding: 35px 30px;
-            border-radius: 12px;
+            border-radius: 14px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-            width: 320px;
+            width: 360px; /* Ditambah sedikit agar muat 1 baris */
+            max-width: 90%;
             border: 1px solid rgba(255, 255, 255, 0.15);
             text-align: center;
+            box-sizing: border-box;
         }
         .header-title {
-            font-size: 1.8em;
+            font-size: 1.35em; /* Disesuaikan ukurannya */
             font-weight: bold;
             margin: 0 0 6px 0;
             color: #ffffff;
             letter-spacing: 0.5px;
+            white-space: nowrap; /* Mencegah teks turun ke baris baru */
         }
         .header-subtitle {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #aaaaaa;
             margin: 0 0 25px 0;
             font-weight: normal;
