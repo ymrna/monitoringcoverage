@@ -8,7 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                    url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1920') no-repeat center center fixed;
+                    url('/static/bg-login.jpg') no-repeat center center fixed;
             background-size: cover;
             color: #fff;
             display: flex;
@@ -75,6 +75,7 @@
         <div class="error-msg">{{ error }}</div>
     {% endif %}
     <form action="/login" method="post">
+     <h3>(Tim Montib)Balmon Pangkalpinang</h3>
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required autocomplete="off">
