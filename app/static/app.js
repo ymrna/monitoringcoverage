@@ -117,7 +117,7 @@ async function showHistory() {
   } catch (e) {
     div.innerHTML = "Gagal memuat history";
   }
-}gti
+}
 
 // ================= LOAD HISTORY =================
 function loadHistory(id) {
@@ -233,52 +233,67 @@ function getUserLocation() {
   });
 }
 
-
 // ================= EXPORT EXCEL =================
-function exportExcel(){
+function exportExcel() {
+  if (standingPoints.length === 0) {
+    alert("Belum ada data");
+    return;
+  }
 
- if(standingPoints.length === 0){
-   alert("Belum ada data");
-   return;
- }
+  let data = [];
 
- let data = [];
+  standingPoints.forEach((p, i) => {
+    let mapUrl = `https://www.google.com/maps?q=${p[0]},${p[1]}`;
 
- standingPoints.forEach((p, i) => {
-   let mapUrl = `https://www.google.com/maps?q=${p[0]},${p[1]}`;
+    data.push({
+      No: i + 1,
+      Latitude: p[0],
+      Longitude: p[1],
+      "Link Google Maps": mapUrl
+    });
+  });
 
-   data.push({
-     No: i + 1,
-     Latitude: p[0],
-     Longitude: p[1],
-     "Link Google Maps": mapUrl
-   });
- });
+  let ws = XLSX.utils.json_to_sheet(data);
 
- let ws = XLSX.utils.json_to_sheet(data);
+  standingPoints.forEach((p, i) => {
+    let cellAddress = `D${i + 2}`;
+    if (ws[cellAddress]) {
+      ws[cellAddress].l = { Target: ws[cellAddress].v, Tooltip: "Buka di Google Maps" };
+    }
+  });
 
- // Membuat link dapat diklik secara otomatis di Excel
- standingPoints.forEach((p, i) => {
-   let cellAddress = `D${i + 2}`; // Kolom D adalah Link Google Maps
-   if (ws[cellAddress]) {
-     ws[cellAddress].l = { Target: ws[cellAddress].v, Tooltip: "Buka di Google Maps" };
-   }
- });
-
- let wb = XLSX.utils.book_new();
-
- XLSX.utils.book_append_sheet(
-   wb,
-   ws,
-   "Titik_Ukur"
- );
-
- XLSX.writeFile(
-   wb,
-   "target_titik_ukur.xlsx"
- );
-
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Titik_Ukur");
+  XLSX.writeFile(wb, "target_titik_ukur.xlsx");
 }
+
+// ================= EXCEL LOAD =================
+function loadExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet);
+
+    rawPoints = json.map(r => ({
+      nama: r.nama_client || r.nama || "Client",
+      freq: r.freq || "-",
+      lokasi: r.lokasi || "-",
+      lat: +(r.lat || r.latitude || 0),
+      lon: +(r.long || r.longitude || 0)
+    }));
+
+    document.getElementById("coords").value =
+      rawPoints.map(p => `${p.lat},${p.lon}`).join("\n");
+
+    plotTargets();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 // ================= TARGET PLOT =================
 function plotTargets() {
   targetLayers.forEach(l => map.removeLayer(l));
